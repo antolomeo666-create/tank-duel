@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tank Duel – 1v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0d1117;--panel:#121820;--panel2:#0a0e13;--line:#ffffff17;--line2:#ffffff2a;--ink:#e6e9ec;--mute:#8d97a1;--acc:#ffd54f;--blue:#4fc3f7;--orange:#ff7043;--stencil:'Black Ops One',Impact,sans-serif}
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% 25%,#1a2027,#07090c);color:var(--ink);font-family:system-ui,sans-serif}
+  body{display:flex;align-items:center;justify-content:center;flex-direction:column;min-height:100vh;padding:10px 0}
+  #wrap{position:relative;width:min(96vw,calc(82vh*1.6));aspect-ratio:1200/750;border-radius:12px;overflow:hidden;box-shadow:0 0 0 1px #ffffff14,0 20px 60px #000c}
+  canvas#c{display:block;width:100%;height:100%;background:#0b0d11}
+  .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(5,7,10,.6);overflow:auto;padding:12px}
+  .hidden{display:none!important}
+  button{font-family:inherit}
+  button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+
+  /* ---- menu ---- */
+  .mcard{width:min(1010px,100%);background:rgba(13,17,23,.95);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px #000b;margin:auto;overflow:hidden}
+  .mhead{display:flex;align-items:center;gap:18px;padding:14px 20px;border-bottom:1px solid var(--line);background:linear-gradient(90deg,#161c24,#10151b)}
+  .mhead h1{font:400 38px/1 var(--stencil);margin:0;color:#f1e6c8;letter-spacing:1px}
+  .mhead p{margin:3px 0 0;color:var(--mute);font-size:13px}
+  .mhead .grow{flex:1}
+  .primary{background:var(--acc);color:#1a1500;border:0;border-radius:10px;font:20px var(--stencil);padding:11px 30px;cursor:pointer;letter-spacing:1px;box-shadow:0 4px 0 #b8901b}
+  .primary:hover{background:#ffe17a}
+  .primary:active{transform:translateY(2px);box-shadow:0 2px 0 #b8901b}
+  .primary:disabled{background:#3a3a30;color:#8a8a70;cursor:default;box-shadow:none}
+  .mbody{display:grid;grid-template-columns:300px minmax(0,1fr);gap:14px;padding:14px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .panel h2{margin:0;font:600 12px system-ui;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+  .settings{display:flex;flex-direction:column;gap:10px}
+  .settings h2{margin-bottom:2px}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field>label{font-size:12px;color:var(--mute);font-weight:600}
+  .seg{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px}
+  .seg button{flex:1;border:0;background:none;color:#c9d1d9;font:600 12.5px system-ui;padding:7px 4px;border-radius:6px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:5px}
+  .seg button:hover{background:#ffffff0d}
+  .seg button.on{background:var(--acc);color:#1a1500}
+  .seg button canvas{width:14px;height:14px}
+  .online{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px}
+  .netrow{display:flex;gap:8px;align-items:center}
+  .netrow span{color:#7d8790;font-size:12px}
+  #code{width:70px;background:#141a22;border:1px solid var(--line2);border-radius:7px;color:#fff;font:700 15px monospace;padding:7px;text-transform:uppercase;text-align:center;letter-spacing:2px}
+  .btn{background:#222a35;color:var(--ink);border:1px solid var(--line2);border-radius:8px;font:600 13px system-ui;padding:8px 12px;cursor:pointer;white-space:nowrap}
+  .howto ol{margin:8px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:13px;color:#c3cad1;line-height:1.45}
+  .howto b{color:var(--ink)}
+  .tthumb.locked{opacity:.35;filter:grayscale(1);cursor:not-allowed}
+  .acttabs{display:flex;gap:4px;margin-left:8px}
+  .acttabs button{background:var(--panel2);border:1px solid var(--line);color:#c9d1d9;border-radius:7px;font:600 11.5px system-ui;padding:4px 10px;cursor:pointer}
+  .acttabs button.on{background:var(--acc);color:#1a1500;border-color:var(--acc)}
+  .acttabs button:disabled{opacity:.4;cursor:not-allowed}
+  .paints{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .sw{width:24px;height:24px;border-radius:50%;border:2px solid #ffffff22;cursor:pointer;padding:0;background:conic-gradient(var(--a) 0 40%,var(--b) 40% 70%,var(--c) 70%)}
+  .sw.on{border-color:var(--acc);box-shadow:0 0 0 2px #ffd54f55}
+  .sw.locked{opacity:.25;filter:grayscale(.7);cursor:not-allowed}
+  .pname{font-size:12px;color:var(--ink);margin-left:4px}.pname em{font-style:normal;color:var(--mute)}
+  .chead{display:flex;align-items:baseline;gap:10px;margin-bottom:9px}
+  .chead span{margin-left:auto;font-size:12px;color:var(--acc)}
+  .cbody{display:grid;grid-template-columns:200px minmax(0,1fr);gap:12px}
+  .mlist{display:flex;flex-direction:column;gap:3px}
+  .mitem{display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:3px 8px;color:var(--ink);cursor:pointer;text-align:left;font:600 12px system-ui}
+  .mitem:hover{border-color:#ffffff40}
+  .mitem.on{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset;background:#16140a}
+  .mitem.locked{opacity:.4;cursor:not-allowed}
+  .mitem .mn{width:20px;height:20px;border-radius:5px;background:#ffffff12;display:grid;place-items:center;font:400 12px var(--stencil)}
+  .mitem.on .mn{background:var(--acc);color:#1a1500}
+  .mitem .mt{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mitem .ms{color:var(--acc);font-size:11px;letter-spacing:1px}
+  .brief{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:7px}
+  .brief .bt{display:flex;align-items:baseline;gap:8px}
+  .brief .bt b{font:400 18px var(--stencil);color:#f1e6c8}
+  .bstars{color:var(--acc);margin-left:auto}
+  .brief p{margin:0;font-size:13px;line-height:1.45;color:#c3cad1}
+  .chips{display:flex;flex-wrap:wrap;gap:5px}
+  .chips span{font-size:11px;padding:2px 8px;border-radius:20px;background:#ffffff10;color:#c9d1d9}
+  .chips .warn{background:#ff704322;color:#ffab91}
+  .vs{display:flex;gap:16px}
+  .vs>div{display:flex;align-items:center;gap:6px}
+  .vs canvas{width:46px;height:50px}
+  .vs small{font-size:11px;color:var(--mute);line-height:1.35}
+  .vs small b{color:var(--ink)}
+
+  .btn:hover{background:#2c3644}
+  #netStatus{font-size:12.5px;color:#b9c3cc;line-height:1.45}
+  #netStatus:empty{display:none}
+  #netStatus.bad{color:#ff9e9e}
+  #netStatus .code{color:var(--acc);font-family:monospace;font-size:15px;letter-spacing:2px}
+  .note{font-size:11.5px;color:#7d8790;margin:0}
+  .players{display:flex;flex-direction:column;gap:12px;min-width:0}
+  .player{border-left:3px solid var(--blue);display:flex;flex-direction:column;gap:9px}
+  .player.p2{border-left-color:var(--orange)}
+  .phead{display:flex;align-items:center;gap:8px}
+  .phead .dot{width:10px;height:10px;border-radius:50%;background:var(--blue);box-shadow:0 0 8px var(--blue)}
+  .p2 .phead .dot{background:var(--orange);box-shadow:0 0 8px var(--orange)}
+  .phead h2{color:var(--ink);font-size:12.5px}
+  .phead .keys{margin-left:auto;font-size:11.5px;color:var(--mute)}
+  .picker{display:flex;gap:10px;align-items:stretch}
+  .tdetail{width:236px;flex:0 0 236px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;gap:8px;align-items:center}
+  .tdetail canvas{width:70px;height:76px;flex:0 0 auto}
+  .tinfo{display:flex;flex-direction:column;flex:1;min-width:0}
+  .tinfo b{font:400 17px var(--stencil)}
+  .tinfo small{font-size:11px;color:#9aa4ae;line-height:1.25}
+  .tinfo em{font-style:normal;font-size:11px;color:var(--acc);margin:3px 0 4px;line-height:1.25}
+  .stat{display:flex;align-items:center;gap:5px;font-size:9.5px;color:#8f99a3;margin-top:2px}
+  .stat span{width:44px}
+  .stat i{flex:1;height:4px;background:#ffffff14;border-radius:2px;position:relative;overflow:hidden}
+  .stat i::after{content:"";position:absolute;inset:0;width:var(--v);background:var(--acc);border-radius:2px}
+  .tgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;flex:1;align-content:start}
+  .tthumb{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:3px 2px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;color:#c9d1d9;min-width:0}
+  .tthumb:hover{border-color:#ffffff40}
+  .tthumb.on{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset;background:#16140a;color:var(--acc)}
+  .tthumb canvas{width:34px;height:37px}
+  .tthumb span{font:600 9.5px system-ui;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .abil{display:flex;align-items:center;gap:10px}
+  .abil .lbl{font-size:12px;color:var(--mute);font-weight:600;width:44px}
+  .abil .seg{flex:1}
+  .abdesc{margin:-4px 0 -2px 54px;font-size:11.5px;color:var(--acc);min-height:15px}
+  .mfoot{display:flex;gap:18px;justify-content:center;padding:9px 16px 11px;border-top:1px solid var(--line);color:var(--mute);font-size:12px}
+  .mfoot kbd{font-size:11px}
+
+  /* ---- pause, toast ---- */
+  .pcard{background:rgba(13,17,23,.96);border:1px solid var(--line);border-radius:16px;padding:24px 34px;display:flex;flex-direction:column;gap:10px;align-items:stretch;min-width:280px;text-align:center}
+  .pcard h2{font:400 40px var(--stencil);margin:0 0 4px;color:#f1e6c8}
+  .pcard p{margin:0;color:#9aa4ae;font-size:13px}
+  .pcard p:empty{display:none}
+  #splash{background:radial-gradient(circle at 50% 45%,rgba(6,9,14,.62),rgba(4,6,9,.9));cursor:pointer;z-index:5}
+  .splashing #menu,.splashing .help{visibility:hidden}
+  .splash{text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+  .splash h1{font:400 clamp(48px,9vw,110px)/1 var(--stencil);margin:0;color:#f1e6c8;letter-spacing:2px;text-shadow:0 6px 30px #000}
+  .splash p{margin:0;color:#c3cad1;font-size:18px}
+  .splash .press{margin-top:26px;font:22px var(--stencil);color:var(--acc);letter-spacing:2px;animation:blink 1.2s infinite}
+  .splash small{color:#aeb6bf;font-size:12.5px}
+  @keyframes blink{50%{opacity:.25}}
+  @media(prefers-reduced-motion:reduce){.splash .press{animation:none}}
+  /* fullscreen: the game fills the screen, keeping its shape */
+  body.fs{padding:0;background:#000}
+  body.fs #wrap{width:100vw;height:100vh;aspect-ratio:auto;border-radius:0;box-shadow:none}
+  body.fs .help{display:none}
+  #toast{position:absolute;left:50%;bottom:22px;transform:translate(-50%,20px);background:rgba(12,15,20,.92);border:1px solid var(--line2);border-radius:10px;padding:9px 16px;font-size:14px;opacity:0;transition:.25s;pointer-events:none}
+  #toast.show{opacity:1;transform:translate(-50%,0)}
+
+  /* ---- controls below the game ---- */
+  .help{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:96vw;font-size:12.5px}
+  .hcard{background:#ffffff08;border:1px solid #ffffff14;border-radius:10px;padding:8px 12px;display:grid;grid-template-columns:auto auto;gap:3px 12px;align-content:start}
+  .hcard h3{grid-column:1/-1;margin:0 0 3px;font:600 11px system-ui;letter-spacing:.08em;text-transform:uppercase}
+  .hcard.c1 h3{color:#8fd8ff}.hcard.c2 h3{color:#ffad8a}.hcard.cp h3{color:#c5e1a5}.hcard.cm h3{color:#9aa4ae}
+  .hcard span{color:#9aa4ae}
+  kbd{background:#2a313c;border-radius:4px;padding:1px 6px;font-family:monospace;color:#fff;border-bottom:2px solid #11151b;font-size:12px;white-space:nowrap}
+  @media(max-width:860px){.mbody{grid-template-columns:minmax(0,1fr)}.picker{flex-direction:column}.tdetail{width:auto;flex:none}}
+</style>
+</head>
+<body class="splashing">
+<div id="wrap">
+  <canvas id="c" width="1200" height="750"></canvas>
+  <div id="menu" class="overlay">
+    <div class="mcard">
+      <header class="mhead">
+        <div class="grow"><h1>TANK DUEL</h1><p>Top-down 1v1 tank battles · first to 3 rounds wins</p></div>
+        <button class="btn fsbtn">Fullscreen</button>
+        <button id="start" class="primary">START</button>
+      </header>
+      <div class="mbody">
+        <section class="panel settings">
+          <h2>Game settings</h2>
+          <div class="field"><label>Mode</label><div class="seg" data-opt="mode"><button data-v="local">2 Players</button><button data-v="cpu">vs CPU</button><button data-v="online">Online</button><button data-v="campaign">Campaign</button></div></div>
+          <div class="field" data-show="cpu"><label>CPU difficulty</label><div class="seg" data-opt="diff"><button data-v="easy">Easy</button><button data-v="medium">Medium</button><button data-v="hard">Hard</button></div></div>
+          <div class="online" data-show="online">
+            <div class="netrow"><button id="host" class="btn">Host game</button><span>or</span><input id="code" maxlength="4" placeholder="CODE" autocomplete="off" spellcheck="false"><button id="join" class="btn">Join</button></div>
+            <div id="netStatus"></div>
+            <p class="note">The host's map, turret and aim-line settings are used.</p>
+          </div>
+          <div class="field" data-show="local cpu online"><label>Map</label><div class="seg" data-opt="map"><button data-v="random">Random</button><button data-v="grass">Grass</button><button data-v="desert">Desert</button><button data-v="winter">Winter</button></div></div>
+          <div class="field"><label>Turret</label><div class="seg" data-opt="turret"><button data-v="fixed">Fixed to hull</button><button data-v="free">Free aim</button></div></div>
+          <div class="field"><label>Aim line</label><div class="seg" data-opt="aim"><button data-v="on">On</button><button data-v="off">Off (hard)</button></div></div>
+          <div class="field"><label>Sound effects</label><div class="seg" data-opt="sound"><button data-v="on">On</button><button data-v="off">Off</button></div></div>
+          <div class="field"><label>Menu music</label><div class="seg" data-opt="music"><button data-v="on">On</button><button data-v="off">Off</button></div></div>
+          <p class="note" id="musicNote">Click anywhere or press a key to start the music.</p>
+        </section>
+        <div class="players">
+          <section class="panel player p1">
+            <div class="phead"><span class="dot"></span><h2 id="p1label">Blue player</h2><span class="keys" id="p1keys"></span></div>
+            <div class="picker" data-opt="p1"></div>
+            <div class="abil"><span class="lbl">Ability</span><div class="seg ab" data-opt="a1"></div></div>
+            <p class="abdesc" id="a1desc"></p>
+            <div class="abil"><span class="lbl">Paint</span><div class="paints" id="paints"></div></div>
+          </section>
+          <section class="panel player p2" data-show="local cpu">
+            <div class="phead"><span class="dot"></span><h2 id="p2label">Orange player</h2><span class="keys" id="p2keys"></span></div>
+            <div class="picker" data-opt="p2"></div>
+            <div class="abil"><span class="lbl">Ability</span><div class="seg ab" data-opt="a2"></div></div>
+            <p class="abdesc" id="a2desc"></p>
+          </section>
+          <section class="panel campaign" data-show="campaign">
+            <div class="chead"><h2>Campaign</h2><div class="acttabs" id="acttabs"></div><span id="campProgress"></span></div>
+            <div class="cbody"><div class="mlist" id="mlist"></div><div class="brief" id="brief"></div></div>
+          </section>
+          <section class="panel howto" data-show="online">
+            <h2>How online works</h2>
+            <ol>
+              <li>The host runs <kbd>node server.js</kbd> and opens <b>localhost:3000</b>.</li>
+              <li>Host clicks <b>Host game</b> and shares the 4-letter code.</li>
+              <li>The friend opens the host's network address (shown in the server window), picks <b>Online</b>, types the code and clicks <b>Join</b>.</li>
+              <li>When the friend has joined, the host presses <b>START MATCH</b>.</li>
+            </ol>
+          </section>
+        </div>
+      </div>
+      <footer class="mfoot"><span><kbd>Space</kbd> / <kbd>Enter</kbd> start</span><span><kbd>Esc</kbd> pause in game</span><span><kbd>M</kbd> sound on/off</span><span>Double-click the game for fullscreen</span><span>Controllers work too</span></footer>
+    </div>
+  </div>
+  <div id="pause" class="overlay hidden">
+    <div class="pcard"><h2>PAUSED</h2><p id="pauseNote"></p><button id="resume" class="primary">Resume</button><button class="btn fsbtn">Fullscreen</button><button id="quit" class="btn">Quit to menu</button></div>
+  </div>
+  <div id="splash" class="overlay">
+    <div class="splash"><h1>TANK DUEL</h1><p>Top-down 1v1 tank battles</p><div class="press">CLICK OR PRESS ANY KEY</div><small>Sound and music start when you click. Browsers require this.</small></div>
+  </div>
+  <div id="toast"></div>
+</div>
+<div id="help" class="help"></div>
+<script src="js/maps.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/gfx.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/net.js"></script>
+<script src="js/campaign.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
